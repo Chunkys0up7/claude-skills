@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Progress Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ─── Reset and base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #FAFAF7;
+      color: #111827;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    a { color: #1E40AF; }
+
+    /* ─── Layout ───────────────────────────────────────────────────── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 96px; }
+    .section { margin-top: 40px; }
+    .section + .section { margin-top: 48px; }
+    h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+    h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 16px; color: #111827; }
+    h3 { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 8px; }
+    p { color: #374151; }
+    .muted { color: #6B7280; font-size: 13px; }
+    .label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; color: #6B7280; font-weight: 600; }
+
+    /* ─── Header ───────────────────────────────────────────────────── */
+    .header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid #E5E7EB; }
+    .header h1 { flex: 1 1 auto; }
+    .header .period { color: #6B7280; font-size: 14px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+    .status-pill.green { background: #DCFCE7; color: #065F46; }
+    .status-pill.amber { background: #FEF3C7; color: #92400E; }
+    .status-pill.red   { background: #FEE2E2; color: #991B1B; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.green { background: #10B981; }
+    .status-dot.amber { background: #F59E0B; }
+    .status-dot.red   { background: #EF4444; }
+
+    /* ─── TL;DR ────────────────────────────────────────────────────── */
+    .tldr { background: #FFFFFF; border: 1px solid #E5E7EB; border-left: 4px solid #1E40AF; padding: 18px 22px; border-radius: 6px; }
+    .tldr .label { margin-bottom: 6px; display: block; }
+
+    /* ─── Exec summary ─────────────────────────────────────────────── */
+    .exec-summary ul { list-style: none; padding: 0; }
+    .exec-summary li { padding: 10px 0 10px 24px; position: relative; border-bottom: 1px dashed #E5E7EB; }
+    .exec-summary li:last-child { border-bottom: none; }
+    .exec-summary li::before { content: '→'; position: absolute; left: 0; color: #1E40AF; font-weight: 700; }
+
+    /* ─── Metrics grid ─────────────────────────────────────────────── */
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; padding: 14px 16px; }
+    .metric-card .label { display: block; margin-bottom: 6px; }
+    .metric-card .value { font-size: 24px; font-weight: 700; color: #111827; letter-spacing: -0.02em; }
+    .metric-card .trend { font-size: 13px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+    .trend.up { color: #065F46; }
+    .trend.down { color: #991B1B; }
+    .trend.flat { color: #6B7280; }
+
+    /* ─── Charts ───────────────────────────────────────────────────── */
+    .charts { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+    @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+    .chart-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; padding: 18px; }
+    .chart-card h3 { margin-bottom: 12px; }
+    .chart-container { position: relative; height: 240px; }
+
+    /* ─── Item cards (shipped / in progress) ───────────────────────── */
+    .items { display: grid; gap: 12px; }
+    .item-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; padding: 16px 18px; }
+    .item-card h3 { display: flex; align-items: center; gap: 8px; }
+    .item-card .spec-ref { background: #F3F4F6; color: #374151; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-weight: 500; }
+    .item-card .what { margin-top: 6px; }
+    .item-card .why { margin-top: 8px; padding: 8px 12px; background: #EFF6FF; border-radius: 4px; font-size: 14px; color: #1E40AF; }
+    .item-card .why::before { content: 'Why it matters: '; font-weight: 600; }
+    .item-card details { margin-top: 8px; }
+    .item-card details summary { cursor: pointer; font-size: 13px; color: #6B7280; user-select: none; padding: 4px 0; }
+    .item-card details summary:hover { color: #1E40AF; }
+    .item-card details summary::-webkit-details-marker { display: none; }
+    .item-card details summary::before { content: '▸ '; display: inline-block; transition: transform 0.15s; }
+    .item-card details[open] summary::before { content: '▾ '; }
+    .item-card details .detail-body { padding: 8px 0 0 16px; font-size: 13px; color: #4B5563; }
+
+    /* ─── Progress bars ────────────────────────────────────────────── */
+    .progress { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .progress-bar { flex: 1; height: 6px; background: #F3F4F6; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #1E40AF; border-radius: 999px; transition: width 0.3s; }
+    .progress-text { font-size: 12px; color: #6B7280; min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ─── Blocked callout ──────────────────────────────────────────── */
+    .blocked-callout { background: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; border-radius: 6px; padding: 16px 20px; }
+    .blocked-callout h2 { color: #991B1B; }
+    .blocker-item { padding: 12px 0; border-bottom: 1px dashed #FECACA; }
+    .blocker-item:last-child { border-bottom: none; }
+    .blocker-item h3 { color: #991B1B; }
+    .blocker-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 6px; font-size: 13px; color: #7F1D1D; }
+    .blocker-meta strong { color: #991B1B; }
+
+    /* ─── Tables ───────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; overflow: hidden; }
+    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #E5E7EB; font-size: 14px; }
+    th { background: #F9FAFB; font-weight: 600; color: #374151; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    tr:last-child td { border-bottom: none; }
+    td.severity-high   { color: #991B1B; font-weight: 600; }
+    td.severity-medium { color: #92400E; font-weight: 600; }
+    td.severity-low    { color: #065F46; font-weight: 600; }
+
+    /* ─── Next period ──────────────────────────────────────────────── */
+    .next-list { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 6px; padding: 16px 20px; }
+    .next-list ol { padding-left: 24px; }
+    .next-list li { padding: 6px 0; }
+
+    /* ─── Footer ───────────────────────────────────────────────────── */
+    footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid #E5E7EB; color: #9CA3AF; font-size: 12px; text-align: center; }
+    footer a { color: #6B7280; }
+
+    /* ─── Print ────────────────────────────────────────────────────── */
+    @media print {
+      body { background: #FFFFFF; }
+      .page { padding: 0; max-width: none; }
+      .section { page-break-inside: avoid; }
+      details { display: block !important; }
+      details > summary { display: none; }
+      .chart-card { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+<!-- ─── REPORT DATA ─────────────────────────────────────────────────
+     This is the single source of truth for the report. Claude fills
+     this object when generating a report. The rendering JS below
+     reads from this object and populates the DOM.
+ ─────────────────────────────────────────────────────────────────── -->
+<script>
+const reportData = {
+  meta: {
+    project: "<PROJECT NAME>",
+    period: { from: "YYYY-MM-DD", to: "YYYY-MM-DD" },
+    generated: "YYYY-MM-DDTHH:MM:SSZ",
+    audience: "manager + exec",
+    overallStatus: "amber",                       // "green" | "amber" | "red"
+    statusReason: "On track if Q1 decision lands this week."
+  },
+  tldr: "<One-paragraph plain-English summary. The reader can stop after this and have the right picture.>",
+  execSummary: [
+    "<BLUF bullet 1>",
+    "<BLUF bullet 2>",
+    "<BLUF bullet 3>"
+  ],
+  metrics: [
+    { label: "Spec compliance", value: "75%",  trend: "+25%", dir: "up" },
+    { label: "Items done",      value: "9/12", trend: "+3",   dir: "up" },
+    { label: "In progress",     value: "2",    trend: "+1",   dir: "up" },
+    { label: "Blocked",         value: "1",    trend: "0",    dir: "flat" },
+    { label: "Commits",         value: "47",   trend: "+15",  dir: "up" },
+    { label: "PRs merged",      value: "8",    trend: "+3",   dir: "up" }
+  ],
+  shipped: [
+    {
+      id: "R1",
+      title: "Session creation API",
+      specRef: "auth.md §2.1",
+      what: "Users can create authenticated sessions via login.",
+      why: "Unblocks the frontend authentication surface — UI team can begin login integration without waiting on us.",
+      tech: "app/api/sessions.ts, app/services/session.ts, migration 0042_sessions.sql",
+      evidence: "PR #128 (merged 2026-05-20); tests/sessions.test.ts (5 passing)"
+    }
+  ],
+  inProgress: [
+    {
+      id: "R3",
+      title: "Audit log per action",
+      specRef: "auth.md §4.2",
+      progress: 75,
+      what: "Database table created; handler wiring in progress (8 of 12 endpoints done).",
+      expected: "Thursday 2026-05-23",
+      risk: "Low — pattern established; remaining work is mechanical."
+    }
+  ],
+  blocked: [
+    {
+      id: "R4",
+      title: "Rate limiting",
+      why: "Awaiting decision on window strategy (Q1) — see Open Questions.",
+      impact: "Each day of delay = one day slip in GA launch.",
+      decisionMaker: "<user>",
+      decisionBy: "2026-05-23"
+    }
+  ],
+  decisions: [
+    {
+      id: "D1",
+      decision: "Use JWT for session tokens (not opaque)",
+      why: "Cohesion with existing stack; faster to ship",
+      when: "2026-05-21",
+      reversibility: "Hard"
+    }
+  ],
+  openQuestions: [
+    {
+      id: "Q1",
+      question: "What's the rate-limit window unit — fixed or sliding?",
+      blocks: "R4",
+      askedOf: "<user>",
+      neededBy: "2026-05-23"
+    }
+  ],
+  risks: [
+    { risk: "Backend ship date hold required for FE cutover", severity: "medium", likelihood: "medium", mitigation: "Coordinate ship date; tentative 5/24", owner: "<user>" },
+    { risk: "Redis dependency new to ops team",                severity: "medium", likelihood: "low",    mitigation: "Runbook drafted; on-call training planned",   owner: "<ops>" }
+  ],
+  nextPeriod: [
+    "Resolve Q1 → unblock R4 → ship rate limiting (target 2026-05-26)",
+    "Complete R3 audit logging (target 2026-05-23)",
+    "Begin R5 token refresh (target start 2026-05-26)"
+  ],
+  charts: {
+    statusBreakdown: { Verified: 6, Done: 3, InProgress: 2, Blocked: 1, NotStarted: 0 },
+    commitsOverTime: [
+      { date: "2026-05-15", count: 3 },
+      { date: "2026-05-16", count: 7 },
+      { date: "2026-05-17", count: 5 },
+      { date: "2026-05-18", count: 4 },
+      { date: "2026-05-19", count: 12 },
+      { date: "2026-05-20", count: 9 },
+      { date: "2026-05-21", count: 7 }
+    ]
+  },
+  appendix: {
+    commits: [],              // optional full list
+    prs: [],
+    issues: [],
+    fileHotspots: []          // [{file, changes}]
+  }
+};
+</script>
+
+<!-- ─── Header ─────────────────────────────────────────────────────── -->
+<div class="header">
+  <div>
+    <div class="label">Progress report</div>
+    <h1 id="header-project"></h1>
+    <div class="period" id="header-period"></div>
+  </div>
+  <div class="status-pill" id="status-pill">
+    <span class="status-dot"></span>
+    <span id="status-label"></span>
+  </div>
+</div>
+
+<!-- ─── TL;DR ──────────────────────────────────────────────────────── -->
+<div class="section tldr">
+  <span class="label">TL;DR</span>
+  <p id="tldr-text"></p>
+</div>
+
+<!-- ─── Exec summary ───────────────────────────────────────────────── -->
+<div class="section exec-summary">
+  <h2>Executive summary</h2>
+  <ul id="exec-summary-list"></ul>
+</div>
+
+<!-- ─── Metrics ────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Headline metrics</h2>
+  <div class="metrics" id="metrics-grid"></div>
+</div>
+
+<!-- ─── Charts ─────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Progress at a glance</h2>
+  <div class="charts">
+    <div class="chart-card">
+      <h3>Spec items by status</h3>
+      <div class="chart-container"><canvas id="status-chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Commits over time</h3>
+      <div class="chart-container"><canvas id="commits-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Blocked (prominent if non-empty) ───────────────────────────── -->
+<div class="section blocked-callout" id="blocked-section" style="display:none;">
+  <h2>Blocked / decisions needed</h2>
+  <div id="blocked-list"></div>
+</div>
+
+<!-- ─── Shipped ────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>What shipped this period</h2>
+  <div class="items" id="shipped-list"></div>
+</div>
+
+<!-- ─── In progress ────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>In progress</h2>
+  <div class="items" id="in-progress-list"></div>
+</div>
+
+<!-- ─── Decisions ──────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Decisions made this period</h2>
+  <table id="decisions-table">
+    <thead><tr><th>ID</th><th>Decision</th><th>Why</th><th>When</th><th>Reversibility</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- ─── Open questions ─────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Open questions</h2>
+  <table id="questions-table">
+    <thead><tr><th>ID</th><th>Question</th><th>Blocks</th><th>Asked of</th><th>Needed by</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- ─── Risks ──────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Risks</h2>
+  <table id="risks-table">
+    <thead><tr><th>Risk</th><th>Severity</th><th>Likelihood</th><th>Mitigation</th><th>Owner</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- ─── Next period ────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Next period plan</h2>
+  <div class="next-list">
+    <ol id="next-list"></ol>
+  </div>
+</div>
+
+<!-- ─── Appendix (collapsible) ─────────────────────────────────────── -->
+<div class="section">
+  <details>
+    <summary><h2 style="display:inline; margin:0;">Appendix — raw activity</h2></summary>
+    <div style="margin-top: 16px;">
+      <h3>File hotspots</h3>
+      <table id="hotspots-table">
+        <thead><tr><th>File</th><th>Changes</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <h3 style="margin-top: 24px;">All commits in period</h3>
+      <table id="commits-table">
+        <thead><tr><th>Hash</th><th>Date</th><th>Author</th><th>Subject</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<footer>
+  Generated <span id="footer-timestamp"></span> · Audience: <span id="footer-audience"></span>
+</footer>
+
+</div><!-- /page -->
+
+<!-- ─── Rendering ──────────────────────────────────────────────────── -->
+<script>
+(function () {
+  const d = reportData;
+
+  // Header
+  document.getElementById('header-project').textContent = d.meta.project;
+  document.getElementById('header-period').textContent = `Period: ${d.meta.period.from} → ${d.meta.period.to}`;
+  document.title = `Progress Report · ${d.meta.project} · ${d.meta.period.to}`;
+
+  // Status pill
+  const pill = document.getElementById('status-pill');
+  const dot = pill.querySelector('.status-dot');
+  pill.classList.add(d.meta.overallStatus);
+  dot.classList.add(d.meta.overallStatus);
+  document.getElementById('status-label').textContent =
+    d.meta.overallStatus.charAt(0).toUpperCase() + d.meta.overallStatus.slice(1) +
+    (d.meta.statusReason ? ` — ${d.meta.statusReason}` : '');
+
+  // TL;DR
+  document.getElementById('tldr-text').textContent = d.tldr;
+
+  // Exec summary
+  const es = document.getElementById('exec-summary-list');
+  (d.execSummary || []).forEach(b => {
+    const li = document.createElement('li');
+    li.textContent = b;
+    es.appendChild(li);
+  });
+
+  // Metrics
+  const mg = document.getElementById('metrics-grid');
+  (d.metrics || []).forEach(m => {
+    const arrow = m.dir === 'up' ? '▲' : m.dir === 'down' ? '▼' : '◆';
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.innerHTML = `
+      <span class="label">${escape(m.label)}</span>
+      <div class="value">${escape(m.value)}</div>
+      <div class="trend ${m.dir}">${arrow} ${escape(m.trend)}</div>`;
+    mg.appendChild(card);
+  });
+
+  // Charts — status doughnut
+  const sb = d.charts.statusBreakdown || {};
+  new Chart(document.getElementById('status-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(sb),
+      datasets: [{
+        data: Object.values(sb),
+        backgroundColor: ['#10B981','#34D399','#F59E0B','#EF4444','#9CA3AF'],
+        borderWidth: 0
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 12 } } } } }
+  });
+
+  // Charts — commits line
+  const cot = d.charts.commitsOverTime || [];
+  new Chart(document.getElementById('commits-chart'), {
+    type: 'line',
+    data: {
+      labels: cot.map(c => c.date),
+      datasets: [{ label: 'Commits', data: cot.map(c => c.count), borderColor: '#1E40AF', backgroundColor: 'rgba(30,64,175,0.08)', fill: true, tension: 0.3, pointRadius: 3 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  // Blocked
+  if ((d.blocked || []).length) {
+    document.getElementById('blocked-section').style.display = 'block';
+    const bl = document.getElementById('blocked-list');
+    d.blocked.forEach(b => {
+      const div = document.createElement('div');
+      div.className = 'blocker-item';
+      div.innerHTML = `
+        <h3>${escape(b.id)} — ${escape(b.title)}</h3>
+        <p>${escape(b.why)}</p>
+        <div class="blocker-meta">
+          <span><strong>Impact:</strong> ${escape(b.impact)}</span>
+          <span><strong>Decision by:</strong> ${escape(b.decisionMaker)}</span>
+          <span><strong>Needed by:</strong> ${escape(b.decisionBy)}</span>
+        </div>`;
+      bl.appendChild(div);
+    });
+  }
+
+  // Shipped
+  const sl = document.getElementById('shipped-list');
+  (d.shipped || []).forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <h3><span class="spec-ref">${escape(s.id)}</span> ${escape(s.title)} <span class="muted" style="margin-left:auto;font-size:12px;">${escape(s.specRef || '')}</span></h3>
+      <p class="what">${escape(s.what)}</p>
+      <p class="why">${escape(s.why)}</p>
+      <details>
+        <summary>Technical detail</summary>
+        <div class="detail-body">
+          <div><strong>Tech:</strong> ${escape(s.tech || '')}</div>
+          <div style="margin-top:4px;"><strong>Evidence:</strong> ${escape(s.evidence || '')}</div>
+        </div>
+      </details>`;
+    sl.appendChild(card);
+  });
+
+  // In progress
+  const ipl = document.getElementById('in-progress-list');
+  (d.inProgress || []).forEach(i => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <h3><span class="spec-ref">${escape(i.id)}</span> ${escape(i.title)} <span class="muted" style="margin-left:auto;font-size:12px;">${escape(i.specRef || '')}</span></h3>
+      <div class="progress">
+        <div class="progress-bar"><div class="progress-fill" style="width:${Number(i.progress) || 0}%"></div></div>
+        <div class="progress-text">${Number(i.progress) || 0}%</div>
+      </div>
+      <p class="what" style="margin-top:8px;">${escape(i.what)}</p>
+      <div class="muted" style="margin-top:6px;"><strong>Expected:</strong> ${escape(i.expected)} · <strong>Risk:</strong> ${escape(i.risk)}</div>`;
+    ipl.appendChild(card);
+  });
+
+  // Decisions
+  const dt = document.querySelector('#decisions-table tbody');
+  (d.decisions || []).forEach(x => dt.appendChild(rowOf([x.id, x.decision, x.why, x.when, x.reversibility])));
+
+  // Open questions
+  const qt = document.querySelector('#questions-table tbody');
+  (d.openQuestions || []).forEach(q => qt.appendChild(rowOf([q.id, q.question, q.blocks, q.askedOf, q.neededBy])));
+
+  // Risks
+  const rt = document.querySelector('#risks-table tbody');
+  (d.risks || []).forEach(r => {
+    const tr = rowOf([r.risk, r.severity, r.likelihood, r.mitigation, r.owner]);
+    tr.children[1].classList.add(`severity-${r.severity}`);
+    rt.appendChild(tr);
+  });
+
+  // Next period
+  const np = document.getElementById('next-list');
+  (d.nextPeriod || []).forEach(x => {
+    const li = document.createElement('li');
+    li.textContent = x;
+    np.appendChild(li);
+  });
+
+  // Appendix — hotspots
+  const ht = document.querySelector('#hotspots-table tbody');
+  (d.appendix?.fileHotspots || []).forEach(h => ht.appendChild(rowOf([h.file, h.changes])));
+
+  // Appendix — commits
+  const ct = document.querySelector('#commits-table tbody');
+  (d.appendix?.commits || []).forEach(c => ct.appendChild(rowOf([c.hash, c.date, c.author, c.subject])));
+
+  // Footer
+  document.getElementById('footer-timestamp').textContent = new Date(d.meta.generated).toLocaleString();
+  document.getElementById('footer-audience').textContent = d.meta.audience;
+
+  // Helpers
+  function rowOf(cells) {
+    const tr = document.createElement('tr');
+    cells.forEach(c => {
+      const td = document.createElement('td');
+      td.textContent = c == null ? '' : String(c);
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+  function escape(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+  }
+})();
+</script>
+</body>
+</html>
