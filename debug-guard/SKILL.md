@@ -11,6 +11,16 @@ description: |
   "the output is wrong", "this is flaky", "intermittent failure", "race condition", "deadlock",
   "memory leak", "too slow", "performance regression". Also fires when the user pastes a stack
   trace, a traceback, an exception message, a failed test output, or a log excerpt with errors.
+  ALSO triggers strongly on UI / browser / network / proxy / connectivity bugs: "CORS error",
+  "blocked by CORS", "preflight failing", "Failed to fetch", "TypeError: Failed to fetch", "fetch
+  is failing", "401 in the browser but works in Postman / curl", "cookies aren't being sent",
+  "SameSite", "credentials: include", "mixed content", "self-signed certificate",
+  "ERR_CERT_AUTHORITY_INVALID", "ERR_CONNECTION_REFUSED", "ERR_TUNNEL_CONNECTION_FAILED", "the
+  dev proxy isn't working", "Next.js rewrites", "Vite proxy", "nginx 502", "X-Forwarded-For",
+  "WebSocket won't connect", "WebSocket 200 instead of 101", "SSE messages arrive in bursts",
+  "service worker serving stale code", "CSP refused to connect", "behind a corporate proxy", "npm
+  install fails with SSL", "NODE_EXTRA_CA_CERTS", and any UI bug where the user has DevTools open
+  and is staring at the Network tab.
   ENFORCES (this is the whole point): reproduce before fixing, read the FULL stack trace, form a
   written hypothesis with evidence, change ONE thing at a time, find the root cause (not the
   symptom), write a regression test, and check whether the same pattern exists elsewhere in the
@@ -225,6 +235,9 @@ The workflow above is the default. Some bug types want adjustments. Quick guide;
 | Integration / "works locally"  | Diff configs, env vars, versions. Reproduce the env.     |
 | Memory leak                    | Heap snapshots. Look for growing collections.            |
 | Build / install failure        | Read the FIRST error in the log, not the last.           |
+| **UI / browser / network**     | **Network tab IS the truth. Reproduce with DevTools open. Cross the wire boundary deliberately.** → [`references/ui-debugging.md`](./references/ui-debugging.md) |
+| **CORS / cookies / proxy**     | **Find the OPTIONS preflight; isolate which hop loses the request.** → [`references/ui-debugging.md`](./references/ui-debugging.md) |
+| **Corporate proxy / SSL**      | **Install the corporate root CA properly — never disable TLS verification.** → [`references/ui-debugging.md`](./references/ui-debugging.md) |
 
 ---
 
@@ -296,3 +309,6 @@ step, **ask for whatever you need to verify** — log output, surrounding code, 
 - [`references/circle-breaker.md`](./references/circle-breaker.md) — what to do when you're
   spiralling
 - [`references/tools.md`](./references/tools.md) — per-language debugging tools and idioms
+- [`references/ui-debugging.md`](./references/ui-debugging.md) — UI / browser / network / proxy /
+  CORS / cookies / dev proxies / reverse proxies / corporate MITM / WebSocket / SSE / caching /
+  CSP. Read this whenever the bug crosses the browser-to-server wire.

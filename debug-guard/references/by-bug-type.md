@@ -192,6 +192,43 @@ Process memory grows unboundedly over time.
 
 ---
 
+## UI, browser, network, proxy, and connectivity bugs
+
+These are split across browser + network + dev proxy + reverse proxy + server, and each layer
+has its own visibility tools. They want a dedicated approach.
+
+**See [`ui-debugging.md`](./ui-debugging.md)** for the deep playbook covering:
+- The Network-tab-first mindset and the triage workflow
+- CORS, cookies, and `credentials: 'include'`
+- Dev proxies (Next.js rewrites, Vite, webpack-dev-server, CRA)
+- Production reverse proxies (nginx, traefik, cloud LBs) — header forwarding, path rewriting,
+  WebSocket upgrade, timeouts, buffer sizes
+- Corporate proxies and MITM cert pain — `HTTP_PROXY` / `HTTPS_PROXY`, `NODE_EXTRA_CA_CERTS`,
+  `REQUESTS_CA_BUNDLE`, system trust stores
+- WebSocket and SSE failure modes
+- Browser / CDN / service worker caching
+- CSP debugging
+- A quick-reference table mapping browser errors → likely causes
+
+**Top-of-mind rules** (the rest is in the playbook):
+
+1. **The Network tab is the truth.** Console errors are summaries — read the actual request
+   and response.
+2. **Open DevTools BEFORE you reproduce.** Network doesn't record what happened before it was
+   open (unless "Preserve log" + reload).
+3. **Cross the wire boundary deliberately.** Check what the browser sent vs what the server
+   received vs what the server sent vs what the browser saw — any mismatch tells you which
+   layer has the bug.
+4. **"Works in Postman" is not a useful comparison** — Postman doesn't enforce CORS, doesn't
+   send your browser cookies, and sends whatever headers you tell it.
+5. **Isolate which hop loses the request** when there's a proxy pile-up. Don't change the
+   topmost layer first.
+6. **Never `Access-Control-Allow-Origin: *`** in production, and never combine `*` with
+   `Allow-Credentials: true` (browsers reject the combination).
+7. **Never disable TLS verification** to make a cert error go away. Install the right cert.
+
+---
+
 ## Build / install failures
 
 Compile errors, dependency resolution failures, install scripts crashing.

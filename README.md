@@ -19,7 +19,7 @@ claude-skills/
 ## Skills
 
 - **clean-code-guard** — Preventative cross-language code-quality guardrail. Catches "vibe coding" pathologies (sprawl, god objects, magic values, deep nesting, missing types, dead code, premature abstraction, etc.) before they ship. Fires on code-writing, refactoring, and design tasks across TypeScript, JavaScript, Python, Go, Rust, Java, and C#.
-- **debug-guard** — Systematic debugging discipline. Prevents whack-a-mole fixing and the 3-hour spiral on a 20-minute bug. Enforces reproduce-before-fix, hypothesis-with-evidence, one-change-at-a-time, root-cause-not-symptom, and a circle-breaker after 3 failed attempts. Fires on broken code, stack traces, error messages, flaky tests, performance regressions.
+- **debug-guard** — Systematic debugging discipline. Prevents whack-a-mole fixing and the 3-hour spiral on a 20-minute bug. Enforces reproduce-before-fix, hypothesis-with-evidence, one-change-at-a-time, root-cause-not-symptom, and a circle-breaker after 3 failed attempts. Fires on broken code, stack traces, error messages, flaky tests, performance regressions. Deep playbook for UI / browser / network / proxy / CORS / cookies / dev proxies (Next.js, Vite, webpack) / reverse proxies (nginx, traefik) / corporate MITM certs / WebSocket / SSE / caching / CSP.
 - **copilotkit-setup** — Scaffold a CopilotKit (Next.js + FastAPI) in-app AI copilot, or debug install/runtime errors with `@copilotkit/*` packages.
 
 ## Install on a new machine
