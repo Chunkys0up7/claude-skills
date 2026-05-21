@@ -18,6 +18,7 @@ claude-skills/
 
 ## Skills
 
+- **clean-code-guard** — Preventative cross-language code-quality guardrail. Catches "vibe coding" pathologies (sprawl, god objects, magic values, deep nesting, missing types, dead code, premature abstraction, etc.) before they ship. Fires on code-writing, refactoring, and design tasks across TypeScript, JavaScript, Python, Go, Rust, Java, and C#.
 - **copilotkit-setup** — Scaffold a CopilotKit (Next.js + FastAPI) in-app AI copilot, or debug install/runtime errors with `@copilotkit/*` packages.
 
 ## Install on a new machine
