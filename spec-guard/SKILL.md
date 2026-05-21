@@ -17,9 +17,24 @@ description: |
   the spec", "I want to record progress against the spec", "plan how this fits before writing
   it", "design the integration first", "I don't want scope creep", "this isn't in the spec but
   we need it", "the spec is ambiguous about X".
-  Activates THREE moments: spec discovery + tracker bootstrap at kickoff, integration plan
-  before each significant change, tracker update + drift check after each change. End-of-session
-  summary by default.
+  ALSO triggers in RETROSPECTIVE AUDIT mode — when code already exists and the user wants to
+  reconcile it against a spec to find gaps, drift, and out-of-spec features. Trigger phrases:
+  "audit this codebase against the spec", "is everything in the spec implemented", "what's
+  missing from the spec", "what's been built that isn't in the spec", "build a compliance
+  tracker for this existing project", "we have code and we have a spec, reconcile them",
+  "we're picking up a legacy project and need to check spec coverage", "before we ship verify
+  spec compliance", "the spec was updated, reconcile against current code", "what code do we
+  have that isn't in any spec", "retrospective spec audit".
+  Has TWO MODES:
+  • FORWARD IMPLEMENTATION (building from spec) — three moments: spec discovery + tracker
+    bootstrap at kickoff, integration plan before each significant change, tracker update +
+    drift check after each change. End-of-session summary by default.
+  • RETROSPECTIVE AUDIT (auditing existing code against spec) — nine steps: spec extraction,
+    codebase reconnaissance, forward pass (spec→code per requirement with multiple search
+    strategies), classification with evidence, reverse pass (code→spec to find orphans / out-
+    of-spec features), test coverage check, spec drift check, ambiguity / decisions audit, and
+    a prioritized findings report. The output is a populated tracker PLUS a prioritized action
+    list with severities (critical / important / quality / open questions).
   Distinct from `anthropic-skills:spec-driven-dev` — that's the broader process framework
   (scope → design → decompose → execute) for any change. `spec-guard` is the narrower
   enforcement and traceability layer for projects where the spec already exists. The two pair
@@ -81,7 +96,25 @@ See [`references/integration-plan.md`](./references/integration-plan.md) for the
 
 ---
 
-## The workflow
+## Two modes
+
+The skill operates in one of two modes — pick at kickoff:
+
+- **Forward implementation** — you're building from the spec. The workflow below (three
+  moments) applies.
+- **Retrospective audit** — code already exists; the spec exists; no tracker (or stale one)
+  exists; you need to reconcile them. **See [`references/audit-mode.md`](./references/audit-mode.md)
+  for the nine-step audit playbook.**
+
+Both modes share the same tracker format, anti-patterns, and discipline. They differ in
+*shape* — forward mode plans then builds; audit mode finds then records.
+
+If unsure which mode the user wants, ask: "Are we building this fresh, or auditing existing
+code against the spec?"
+
+---
+
+## Forward implementation workflow
 
 ### Moment 1 — Spec discovery and tracker bootstrap (start of session)
 
@@ -124,6 +157,35 @@ After applying a change:
 
 At the end of the session, produce a **progress summary**: items completed, items in progress,
 items blocked, out-of-spec changes (with justification), open questions, what's next.
+
+---
+
+## Retrospective audit mode (summary)
+
+When the user wants to audit existing code against a spec — to find gaps, drift, and
+out-of-spec features — switch to audit mode. Full nine-step playbook in
+[`references/audit-mode.md`](./references/audit-mode.md).
+
+The audit produces two artifacts:
+
+1. **A populated tracker** — every spec requirement classified with status (⬜ / 🟡 / ✅ / 🟦 /
+   ❌ / ➖) and evidence (file paths + test names + commit refs). Plus an Out-of-spec table
+   listing code that doesn't trace to any spec item, an Open Questions table for ambiguities,
+   and a Decisions log for implicit decisions surfaced.
+
+2. **A prioritized findings report** — categorized by severity:
+   - **Critical** — blocks shipping (unimplemented MUST requirements; security/data drift)
+   - **Important** — should fix before release (partial implementations; minor drift; risky
+     out-of-spec)
+   - **Quality gaps** — missing tests, undocumented dependencies, candidates for removal
+   - **Open questions** — needs user input before any action
+
+The audit's value is in the **evidence** — every claim ties to a file/test/commit. "Looks
+implemented" is not a finding; "implemented at `path/file.ts:42`, tested by `tests/x.spec.ts`"
+is.
+
+After an audit, the tracker becomes the baseline for ongoing work — forward implementation
+mode picks up from where the audit left off.
 
 ---
 
@@ -331,5 +393,9 @@ Up next: finish R3 test, resolve Q1, then R4.
 - [`references/spec-discovery.md`](./references/spec-discovery.md) — finding and parsing specs
   across common formats (PRDs, RFCs, design docs, ADRs, user stories with given/when/then,
   OpenAPI / GraphQL contracts, ticket bodies)
+- [`references/audit-mode.md`](./references/audit-mode.md) — retrospective audit playbook for
+  reconciling existing code against a spec. Nine-step workflow, search strategies for
+  finding implementing code, classification rules, reverse pass to find out-of-spec
+  features, test coverage and drift checks, and a prioritized findings report template
 - [`references/anti-patterns.md`](./references/anti-patterns.md) — the 10 vibe-spec patterns to
   catch and avoid
